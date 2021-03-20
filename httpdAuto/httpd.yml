@@ -1,0 +1,22 @@
+- hosts: 192.168.56.104
+  tasks:
+  - name: "Installing HTTPD Package"
+    package:
+      name: "httpd"
+      state: present
+
+  - name: "Creating an index file"
+    copy:
+      content: "<b>This is Static Regular HTTPD Automation</b>"
+      dest: "/var/www/html/index.html"
+
+  - name: "Starting HTTPD Service"
+    service:
+      name: "httpd"
+      state: restarted
+
+  - name: "Stop FireWall for Easy Access"
+    service:
+      name: "firewalld"
+      state: stopped
+      enabled: false

@@ -1,0 +1,47 @@
+- hosts: 192.168.56.104
+
+  vars_prompt:
+  - name: "customizedPort"
+    prompt: "Enter you port form httpd"
+    private: no
+
+  tasks:
+  - name: "Installing HTTPD Package"
+    package:
+      name: "httpd"
+      state: present
+
+  - name: "Creating an index file"
+    copy:
+      content: "<b>This is Dynamic Idempotence HTTPD Automation</b>"
+      dest: "/var/www/html/index.html"
+
+  - name: "Copying Configuration file"
+    template:
+       src: "custom.conf"
+       dest: "/etc/httpd/"
+    notify: RestartService
+
+  - name: "Installing Firewalld in the System"
+    package:
+      name: "firewalld"
+      state: present
+
+  - name: "Enable FirewallD Program and Start It"
+    service:
+      name: "firewalld"
+      enabled: yes
+      state: started
+
+  - name: "Set FireWall to Only Allow User Given Port"
+    firewalld:
+      port: "{{ customizedPort }}/tcp"
+      state: enabled
+      permanent: yes
+      immediate: yes
+
+  handlers:
+  - name: "RestartService"
+    service:
+      name: "httpd"
+      state: restarted
