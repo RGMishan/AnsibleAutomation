@@ -1,2 +1,3 @@
-port: 80
+lbport: 8080
 
+webserverport: 80

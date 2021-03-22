@@ -23,3 +23,4 @@
       permanent: yes
       immediate: yes
 
+- hosts: webservers
