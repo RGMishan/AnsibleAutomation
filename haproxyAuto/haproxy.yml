@@ -1,0 +1,25 @@
+- hosts: loadbalancer
+  var_files: "haproxyVars.yml"
+  tasks:
+  - name: "Installing Package of HAProxy"
+    package:
+      name: "haproxy"
+      state: present
+
+  - name: "Copying Template of Config file from the Controller System"
+    template:
+      src: "haproxy.cfg"
+      dest: "/etc/haproxy"
+
+  - name: "Statring Service"
+    service:
+      name: "haproxy"
+      state: started
+
+  - name: "Enabling FireWallD for the LB Port"
+    firewalld:
+      port: {{ port }}/tcp
+      state: enables
+      permanent: yes
+      immediate: yes
+
