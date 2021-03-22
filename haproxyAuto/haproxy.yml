@@ -27,8 +27,42 @@
 - hosts: webservers
   var_files: "haproxyVars.yml"
   tasks:
-  - name: "Installing Apache HTTPD Server"
+  - name: "Installing Apache HTTPD Package"
     package:
       name: "httpd"
       state: present
- - name: "Creating an index file"    
+      
+  - name: "Creating an index file"
+    copy:
+      content: "<b>This is Dynamic Idempotence HTTPD Automation</b>"
+      dest: "/var/www/html/index.html"
+
+  - name: "Copying Configuration file"
+    template:
+       src: "custom.conf"
+       dest: "/etc/httpd/"
+    notify: RestartService
+
+  - name: "Installing Firewalld in the System"
+    package:
+      name: "firewalld"
+      state: present
+
+  - name: "Enable FirewallD Program and Start It"
+    service:
+      name: "firewalld"
+      enabled: yes
+      state: started
+
+  - name: "Set FireWallD to Allow Connect to WebServer Only"
+    firewalld:
+      port: "{{ webserverport }}/tcp"
+      state: enabled
+      permanent: yes
+      immediate: yes
+
+  handlers:
+  - name: "RestartService"
+    service:
+      name: "httpd"
+      state: restarted
