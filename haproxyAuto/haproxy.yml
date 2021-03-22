@@ -23,4 +23,12 @@
       permanent: yes
       immediate: yes
 
+
 - hosts: webservers
+  var_files: "haproxyVars.yml"
+  tasks:
+  - name: "Installing Apache HTTPD Server"
+    package:
+      name: "httpd"
+      state: present
+ - name: "Creating an index file"    
