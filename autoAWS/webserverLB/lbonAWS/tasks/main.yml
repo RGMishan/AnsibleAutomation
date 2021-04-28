@@ -1,0 +1,16 @@
+---
+# tasks file for lbonAWS
+
+- name: "Install HTTPD and PHP"
+  package:
+    name:
+    - httpd
+    - php
+    state: present
+
+- name: "Sending Index Page From Local System to WebServer"
+  copy:
+    src: "/root/AnsibleAutomation/index.php"
+    dest: "/var/www/html/index.php"
+  notify: RestartService
+   

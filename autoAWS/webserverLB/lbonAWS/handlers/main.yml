@@ -1,0 +1,8 @@
+---
+# handlers file for lbonAWS
+
+- name: "RestartService"
+  service:
+    name: "httpd"
+    state: restarted
+

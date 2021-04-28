@@ -1,0 +1,70 @@
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  -  credential.yml
+
+  tasks:
+  -  name: "boto3 installation"
+     pip:
+       name: "boto3"
+       state: present
+
+  - name: "creating security group for Web Server(Backend Server)"
+    ec2_group:
+      name: backendSecurity
+      description: "Security Group made for backend webserver"
+      region: "ap-south-1"
+      aws_access_key: "{{ access_key }}"
+      aws_secret_key: "{{ secret_key }}"
+      rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      rules_egress:
+      - proto: "all"
+        cidr_ip: 0.0.0.0/0
+
+  - name: "launching ec2 instance for backend webserver"
+    ec2:
+      key_name: awsKeyApril
+      instance_type: t2.micro
+      image: ami-0e306788ff2473ccb
+      wait: true
+      group: backendSecurity
+      count: 3
+      vpc_subnet_id: subnet-d5626bbd
+      assign_public_ip: yes
+      region: ap-south-1
+      state: present
+      aws_access_key: "{{ access_key }}"
+      aws_secret_key: "{{ secret_key }}"
+      instance_tags:
+        Name: backendServer
+    register: backend
+
+  - name: "Adding our instances launched above --> to the backend server group"
+    add_host:
+      hostname: "{{ item.public_ip }}"
+      groupname: backendServer
+    loop: "{{ backend.instances }}" #this we are getting from above "register"
+
+  - name: "Waiting for system to get ready and allow us to SSH"
+    wait_for:
+      host: "{{ item.public_dns_name }}"
+      port: 22
+      state: started
+    loop: "{{ backend.instances }}"
+
+- hosts: backendServer
+  gather_facts: no
+  tasks:
+  - name: running role for webserver
+    include_role:
+      name: lbonAWS
+
+
