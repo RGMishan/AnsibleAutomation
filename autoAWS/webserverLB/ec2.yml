@@ -29,6 +29,10 @@
       - proto: "all"
         cidr_ip: 0.0.0.0/0
 
+  - name: Query for existing instance
+    command: aws ec2 describe-instances --region ap-south-1 --filter Name=tag:Name,Values=backendServer --query "Reservations[].Instances[].PrivateIpAddress" --output text
+    register: query_private_ip
+
   - name: "launching ec2 instance for backend webserver"
     ec2:
       key_name: awsKeyApril
@@ -45,6 +49,7 @@
       aws_secret_key: "{{ secret_key }}"
       instance_tags:
         Name: backendServer
+    when: query_private_ip.stdout == ''
     register: backend
 
   - name: "Adding our instances launched above --> to the backend server group"
@@ -52,10 +57,12 @@
       hostname: "{{ item.public_ip }}"
       groupname: backendServer
     loop: "{{ backend.instances }}" #this we are getting from above "register"
+    when: query_private_ip.stdout == ''
 
   - name: "Pausing the Playbook for 10 sec so that EC2 instance can start(NOT RECOMMENDED IF USING BELOW TASK)"
     pause: 
       seconds: 10
+    when: query_private_ip.stdout == ''
 
   - name: "Waiting for system to get ready and allow us to SSH"
     wait_for:
@@ -63,6 +70,7 @@
       port: 22
       state: started
     loop: "{{ backend.instances }}"
+    when: query_private_ip.stdout == ''
 
 - hosts: backendServer
   gather_facts: no
@@ -70,7 +78,6 @@
   - name: running role for webserver
     include_role:
       name: lbonAWS
-
 
 
 - hosts: localhost
@@ -98,7 +105,11 @@
       rules_egress:
       - proto: all
         cidr_ip: 0.0.0.0/0
-        
+
+  - name: Query for existing instance
+    command: aws ec2 describe-instances --region ap-south-1 --filter Name=tag:Name,Values=frontendServer --query "Reservations[].Instances[].PrivateIpAddress" --output text
+    register: query_private_ip
+
   - name: "Launching ec2 instance for frontend loadbalancer"
     ec2:
       key_name: awsKeyApril
@@ -115,6 +126,7 @@
       aws_secret_key: "{{ secret_key }}"
       instance_tags:
         Name: frontendServer
+    when: query_private_ip.stdout == ''
     register: frontend
 
   - name: "Adding new instance to the host group frontendServer"
@@ -122,22 +134,24 @@
       hostname: "{{ item.public_ip }}"
       groupname: frontendServer
     loop: "{{ frontend.instances }}"
-    
+    when: query_private_ip.stdout == ''
+
   - name: "Pausing the Playbook for 10 sec so that EC2 instance can start(NOT RECOMMENDED IF USING BELOW TASK)"
     pause: 
       seconds: 10
-      
+    when: query_private_ip.stdout == ''
+
   - name: Wait for SSH to come up
     wait_for:
       host: "{{ item.public_dns_name }}"
       port: 22
       state: started
     loop: "{{ frontend.instances }}"
+    when: query_private_ip.stdout == ''
 
 - hosts: frontendServer
   gather_facts: no
   tasks:
-  - name: 
+  - name: "Running role for Loadbalancer" 
     include_role:
-      name: "Running role for Loadbalancer"
-      role: flbonAWS
+      name: flbonAWS

@@ -12,5 +12,9 @@
   copy:
     src: "/root/AnsibleAutomation/index.php"
     dest: "/var/www/html/index.php"
-  notify: RestartService
+
+- name: "Starting WebServer"
+  service:
+    name: "httpd"
+    state: started
    
