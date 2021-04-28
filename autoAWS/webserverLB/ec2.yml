@@ -72,3 +72,72 @@
       name: lbonAWS
 
 
+
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - credential.yml
+
+  tasks:
+  - name: "Creating security group for LoadBalancer Server(Frontend Server)"
+    ec2_group:
+      name: frontendSecurity
+      description: "Security Group made for frontend webserver"
+      region: ap-south-1
+      aws_access_key: "{{ access_key }}"
+      aws_secret_key: "{{ secret_key }}"
+      rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 8080
+        to_port: 8080
+        cidr_ip: 0.0.0.0/0
+      rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+        
+  - name: "Launching ec2 instance for frontend loadbalancer"
+    ec2:
+      key_name: awsKeyApril
+      instance_type: t2.micro
+      image: ami-0e306788ff2473ccb
+      wait: true
+      group: frontendSecurity
+      count: 1
+      vpc_subnet_id: subnet-d5626bbd
+      assign_public_ip: yes
+      region: ap-south-1
+      state: present
+      aws_access_key: "{{ access_key }}"
+      aws_secret_key: "{{ secret_key }}"
+      instance_tags:
+        Name: frontendServer
+    register: frontend
+
+  - name: "Adding new instance to the host group frontendServer"
+    add_host:
+      hostname: "{{ item.public_ip }}"
+      groupname: frontendServer
+    loop: "{{ frontend.instances }}"
+    
+  - name: "Pausing the Playbook for 10 sec so that EC2 instance can start(NOT RECOMMENDED IF USING BELOW TASK)"
+    pause: 
+      seconds: 10
+      
+  - name: Wait for SSH to come up
+    wait_for:
+      host: "{{ item.public_dns_name }}"
+      port: 22
+      state: started
+    loop: "{{ frontend.instances }}"
+
+- hosts: frontendServer
+  gather_facts: no
+  tasks:
+  - name: 
+    include_role:
+      name: "Running role for Loadbalancer"
+      role: flbonAWS
