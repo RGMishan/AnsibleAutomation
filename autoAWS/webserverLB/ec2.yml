@@ -53,6 +53,10 @@
       groupname: backendServer
     loop: "{{ backend.instances }}" #this we are getting from above "register"
 
+  - name: "Pausing the Playbook for 10 sec so that EC2 instance can start(NOT RECOMMENDED IF USING BELOW TASK)"
+    pause: 
+      seconds: 10
+
   - name: "Waiting for system to get ready and allow us to SSH"
     wait_for:
       host: "{{ item.public_dns_name }}"
