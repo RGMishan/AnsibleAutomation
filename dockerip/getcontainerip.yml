@@ -63,15 +63,13 @@
   tasks:
   - name: "Installing HTTPD and PHP"
     dnf:
-      name: 
-        - httpd
-        - php
+      name: "httpd"
       state: present
 
   - name: "Getting code from GitHub and Adding"
     get_url:
-      url: "https://raw.githubusercontent.com/RGMishan/AnsibleAutomation/main/index.php"
-      dest: "/var/html/index.php"
+      url: "https://raw.githubusercontent.com/RGMishan/AnsibleAutomation/main/index.html"
+      dest: "/var/html/index.html"
 
   - name: "Starting HTTPD"
     command: "/usr/sbin/httpd"
