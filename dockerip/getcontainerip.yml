@@ -66,10 +66,10 @@
       name: "httpd"
       state: present
 
-  - name: "Getting code from GitHub and Adding"
-    get_url:
-      url: "https://raw.githubusercontent.com/RGMishan/AnsibleAutomation/main/index.html"
-      dest: "/var/html/index.html"
+  - name: "Adding content to index.html file"
+    copy:
+      content: "<h2>Smile we have connected successfylly.</h2>"
+      dest: "/var/www/html/index.html"
 
   - name: "Starting HTTPD"
     command: "/usr/sbin/httpd"
