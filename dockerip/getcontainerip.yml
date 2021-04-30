@@ -56,7 +56,7 @@
       path: "/etc/ansible/dockerip.txt"
       block: |
              [docker]
-             {{ containerDetail.container.NetworkSettings.IPAddress }} ansible_shh_user=root ansible_ssh_pass=redhat ansible_connection=ssh
+             {{ containerDetail.container.NetworkSettings.IPAddress }} ansible_ssh_user=root ansible_ssh_pass=redhat ansible_connection=ssh
 
 - hosts: docker
   gather_facts: no
@@ -66,11 +66,6 @@
       name: "httpd"
       state: present
 
-  - name: "Installing HTTPD and PHP"
-    dnf:
-      name: "python-3"
-      state: present
- 
   - name: "Getting code from GitHub and Adding"
     get_url:
       url: "https://raw.githubusercontent.com/RGMishan/AnsibleAutomation/main/index.html"
