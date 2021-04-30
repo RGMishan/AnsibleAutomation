@@ -1,0 +1,77 @@
+- hosts: localhost 
+  gather_facts: no
+  vars_prompt:
+  - name: imageName
+    prompt: "Enter Your Image Name"
+    private: no
+
+  - name: containerName
+    prompt: "Enter Your Container Name" 
+    private: no
+
+  tasks:
+  - name: "Configuring Yum repo for docker" 
+    yum_repository:
+      description: "dvd for Docker"
+      name: docker
+      baseurl: "https://download.docker.com/linux/centos/7/x86_64/stable"
+      gpgcheck: no
+
+  - name: "Installing Docker Package"
+    package:
+      name: "docker-ce-18.09.1-3.el7"
+      state: present
+
+  - name: "Starting Docker Service"
+    service:
+      name: "docker"
+      state: started
+      enabled: yes
+
+  - name: "Getting Docker Library"
+    pip:
+      name: docker-py
+
+  - name: "Pulling Container Image"
+    docker_image:
+      name: "{{ imageName }}"
+      source: pull
+
+  - name: "Launching Docker Container {{ containerName }}"
+    docker_container:
+      name: "{{ containerName }}"
+      image: "{{ imageName }}"
+      interactive: yes
+      tty: yes
+      detach: yes
+      state: started
+    register: containerDetail
+
+  - name: "Debugging the Name Just for Check"
+    debug:
+      var: containerDetail.container.NetworkSettings.IPAddress
+ 
+  - name: " Updating the inventory file with the IP address"
+    blockinfile:
+      path: "/etc/ansible/dockerip.txt"
+      block: |
+             [docker]
+             {{ containerDetail.container.NetworkSettings.IPAddress }} ansible_shh_user=root ansible_ssh_pass=redhat ansible_connection=ssh
+
+- hosts: docker
+  gather_facts: no
+  tasks:
+  - name: "Installing HTTPD and PHP"
+    dnf:
+      name: 
+        - httpd
+        - php
+      state: present
+
+  - name: "Getting code from GitHub and Adding"
+    get_url:
+      url: "https://raw.githubusercontent.com/RGMishan/AnsibleAutomation/main/index.php"
+      dest: "/var/html/index.php"
+
+  - name: "Starting HTTPD"
+    command: "/usr/sbin/httpd"
