@@ -32,5 +32,18 @@
             type: bind
             read_only: no
             propagation: rprivate
-
-   - 
+            #register: containerDetail
+     
+     ## remove below host and task line before using
+- hosts: localhost
+  tasks:
+   - name: "Debugging the Name Just for Check"
+     debug: 
+       var: "{{ hostvars['webservers'].containerDetail.container.NetworkSettings.IPAddress }}"
+                      
+   - name: " Updating the inventory file with the IP address"
+     blockinfile:
+       path: "/etc/ansible/dockerip.txt"
+       block: |
+              [docker]
+              {{ containerDetail.container.NetworkSettings.IPAddress }} ansible_shh_user=root ansible_ssh_pass=redhat ansible_connection=ssh

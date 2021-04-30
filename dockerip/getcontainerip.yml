@@ -66,6 +66,11 @@
       name: "httpd"
       state: present
 
+  - name: "Installing HTTPD and PHP"
+    dnf:
+      name: "python-3"
+      state: present
+ 
   - name: "Getting code from GitHub and Adding"
     get_url:
       url: "https://raw.githubusercontent.com/RGMishan/AnsibleAutomation/main/index.html"
